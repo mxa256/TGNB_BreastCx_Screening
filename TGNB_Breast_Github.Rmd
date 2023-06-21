@@ -37,7 +37,7 @@ library(dplyr)
 ```{r echo = FALSE, warnings = FALSE, message = FALSE}
 
 #Data loading
-data=read.csv("/Users/mona/Desktop/Northwestern Research/NLP/Breast/TransgenderHealthSer_DATA_2021-09-03_1342.csv")
+data=read.csv()
 
 
 ```
@@ -783,7 +783,7 @@ data$zip <- as.character(data$zip)
 ```{r}
 
 #Upload csv file containing patient zip codes, state, and county information
-zips <- read.csv("/Users/mona/Desktop/Northwestern Research/NLP/Breast/Zips.csv")
+zips <- read.csv()
 
 zips <- zips %>% select(Var1, STATE, County)
 
