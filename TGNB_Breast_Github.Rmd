@@ -1,0 +1,1656 @@
+---
+title: "TGNB Breast Cancer Screening"
+author: "Mona Ascha"
+date: "5/27/2021"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+## Loading packages
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+#Clear existing data and graphics
+rm(list=ls(
+))
+graphics.off()
+
+#Load library
+
+library(Hmisc)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(statsr)
+library(tableone)
+library(forcats)
+library(pander)
+library(lubridate)
+library(broom)
+library(dplyr)
+```
+
+## Loading Data
+
+```{r echo = FALSE, warnings = FALSE, message = FALSE}
+
+#Data loading
+data=read.csv("/Users/mona/Desktop/Northwestern Research/NLP/Breast/TransgenderHealthSer_DATA_2021-09-03_1342.csv")
+
+
+```
+
+## Cleaning Data
+
+```{r echo=FALSE, warning = FALSE, message = FALSE}
+
+#Setting Labels
+
+label(data$record_id)="Record ID"
+label(data$mrn)="MRN"
+label(data$dob)="Date of birth"
+label(data$sab)="Sex assigned at birth"
+label(data$gi)="Gender identity "
+label(data$gi_other)="If other, please specify"
+label(data$ethnicity)="Race/ethnicity"
+label(data$ethnicity_other)="If other, please specify "
+label(data$language)="Language (primary langauge spoken)"
+label(data$lang_other)="If other, please specify"
+label(data$employment)="Employment status"
+label(data$education)="Education"
+label(data$insurance)="Insurance status"
+label(data$zip)="Zip code"
+label(data$menstrual_period)="First menstrual period"
+label(data$familyhx___1)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=No family history)"
+label(data$familyhx___2)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=Unknown family history)"
+label(data$familyhx___3)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=One first degree relative with breast cancer)"
+label(data$familyhx___4)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=More than one first degree relative with breast cancer)"
+label(data$familyhx___5)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=One second degree relative with breast cancer)"
+label(data$familyhx___6)="Family history of breast cancer (first degree relative is defined as: mother, sister, daughter; second degree relative is not first degree: aunt, grandma, etc.): (choice=More than one second degree relative with breast cancer)"
+label(data$age_famhx_dx)="If positive family history, age family member(s) was(were) diagnosed (ex: aunt - 55, mother - 70):"
+label(data$age_birth)="Age at of first live birth"
+label(data$parity)="Parity (i.e. GXPX or null if nulliparous)"
+label(data$hormones)="Use of hormone therapy"
+label(data$hormone_type___1)="Type of hormone therapy (choice=Estradiol)"
+label(data$hormone_type___2)="Type of hormone therapy (choice=Progesterone)"
+label(data$hormone_type___3)="Type of hormone therapy (choice=Spironolactone)"
+label(data$hormone_type___4)="Type of hormone therapy (choice=Testosterone)"
+label(data$hormone_type___5)="Type of hormone therapy (choice=Leuprolide (Lupron))"
+label(data$hormone_type___6)="Type of hormone therapy (choice=Supprelin (histrelin))"
+label(data$hormone_type___7)="Type of hormone therapy (choice=Other)"
+label(data$other_hormones)="If other, please specify"
+label(data$otherhormone_duration)="Duration of other hormone (months)"
+label(data$otherhormone_date)="Approximate date of initiation of other hormone"
+label(data$estrogen_duration)="Duration of estradiol (months)"
+label(data$estrogen_date)="Approximate date of initiation of estradiol "
+label(data$prog_duration)="Duration of progesterone (months)"
+label(data$prog_date)="Approximate date of initiation of progesterone"
+label(data$spiro_duration)="Duration of spironolactone (months)"
+label(data$spiro_date)="Approximate date of initiation of spironolactone "
+label(data$test_duration)="Duration of testosterone (months)"
+label(data$test_date)="Approximate date of initiation of testosterone"
+label(data$leupro_duration)="Duration of leuprolide (months)"
+label(data$leupro_date)="Approximate date of initiation of leuprolide"
+label(data$supp_duration)="Duration of supprelin (months)"
+label(data$supp_date)="Approximate date of initiation of supprelin "
+label(data$menopause)="Menopausal status"
+label(data$gas)="Has the patient had gender affirming surgery?"
+label(data$gas_procedures___1)="Type of GAS (choice=Mastectomy)"
+label(data$gas_procedures___2)="Type of GAS (choice=Breast augmentation)"
+label(data$gas_procedures___3)="Type of GAS (choice=Oophorectomy)"
+label(data$gas_procedures___4)="Type of GAS (choice=Hysterectomy)"
+label(data$gas_procedures___5)="Type of GAS (choice=Orchiectomy)"
+label(data$gas_procedures___6)="Type of GAS (choice=Penectomy)"
+label(data$gas_procedures___7)="Type of GAS (choice=Facial feminization)"
+label(data$gas_procedures___8)="Type of GAS (choice=Facial masculinization)"
+label(data$gas_procedures___9)="Type of GAS (choice=Phalloplasty)"
+label(data$gas_procedures___10)="Type of GAS (choice=Vaginoplasty/Labiaplasty)"
+label(data$gas_procedures___11)="Type of GAS (choice=Other)"
+label(data$gas_procedure_other)="If other, please specify"
+label(data$mastectomy_date)="Date of mastectomy:"
+label(data$mastectomy_pathology)="Pathology findings from breast surgery:"
+label(data$orchiectomy_date)="Date of orchiectomy:"
+label(data$orchiectomy_pathology)="Pathology findings from orchiectomy:"
+label(data$not_a_mammo)="Was there screening OTHER than a mammogram?"
+label(data$not_a_mam_date)="If yes, indicate date:"
+label(data$not_a_mammo_type)="If yes, indicate the modality:"
+label(data$not_a_mammo_othertype)="If other, indicate: "
+label(data$not_a_mammo_findings)="If yes, please indicate findings and recommendations:"
+label(data$mmg_date1)="Screening (NOT diagnostic) mammogram date 1"
+label(data$location1)="Location of clinic where screening performed"
+label(data$rec1)="Recommendation after mammogram"
+label(data$biopsy_finding1)="If biopsied, what was the pathological finding? "
+label(data$more_imaging1)="If further imaging, what was the imaging and findings?"
+label(data$rec1_other)="If other, please specify"
+label(data$mmg_date2)="Screening (NOT diagnostic) mammogram date 2"
+label(data$location2)="Location of clinic where screening performed"
+label(data$rec2)="Recommendation after mammogram"
+label(data$biopsy_finding2)="If biopsied, what was the pathological finding? "
+label(data$more_imaging2)="If further imaging, what was the imaging and findings?"
+label(data$rec2_other)="If other, please specify"
+label(data$mmg_date3)="Screening (NOT diagnostic) mammogram date 3"
+label(data$location3)="Location of clinic where screening performed"
+label(data$rec3)="Recommendation after mammogram"
+label(data$biopsy_finding3)="If biopsied, what was the pathological finding? "
+label(data$more_imaging3)="If further imaging, what was the imaging and findings?"
+label(data$rec3_other)="If other, please specify"
+label(data$mmg_date4)="Screening (NOT diagnostic) mammogram date 4"
+label(data$location4)="Location of clinic where screening performed"
+label(data$rec4)="Recommendation after mammogram"
+label(data$biopsy_finding4)="If biopsied, what was the pathological finding? "
+label(data$more_imaging4)="If further imaging, what was the imaging and findings?"
+label(data$rec4_other)="If other, please specify"
+label(data$mmg_date5)="Screening (NOT diagnostic) mammogram date 5"
+label(data$location5)="Location of clinic where screening performed"
+label(data$rec5)="Recommendation after mammogram"
+label(data$biopsy_finding5)="If biopsied, what was the pathological finding? "
+label(data$more_imaging5)="If further imaging, what was the imaging and findings?"
+label(data$rec5_other)="If other, please specify"
+label(data$mmg_date6)="Screening (NOT diagnostic) mammogram date 6"
+label(data$location6)="Location of clinic where screening performed"
+label(data$rec6)="Recommendation after mammogram"
+label(data$biopsy_finding6)="If biopsied, what was the pathological finding? "
+label(data$more_imaging6)="If further imaging, what was the imaging and findings?"
+label(data$rec6_other)="If other, please specify"
+label(data$mmg_date7)="Screening (NOT diagnostic) mammogram date 7"
+label(data$location7)="Location of clinic where screening performed"
+label(data$rec7)="Recommendation after mammogram"
+label(data$biopsy_finding7)="If biopsied, what was the pathological finding? "
+label(data$more_imaging7)="If further imaging, what was the imaging and findings?"
+label(data$rec7_other)="If other, please specify"
+label(data$mmg_date8)="Screening (NOT diagnostic) mammogram date 8"
+label(data$location8)="Location of clinic where screening performed"
+label(data$rec8)="Recommendation after mammogram"
+label(data$biopsy_finding8)="If biopsied, what was the pathological finding? "
+label(data$more_imaging8)="If further imaging, what was the imaging and findings?"
+label(data$rec8_other)="If other, please specify"
+label(data$mmg_date9)="Screening (NOT diagnostic) mammogram date 9"
+label(data$location9)="Location of clinic where screening performed"
+label(data$rec9)="Recommendation after mammogram"
+label(data$biopsy_finding9)="If biopsied, what was the pathological finding? "
+label(data$more_imaging9)="If further imaging, what was the imaging and findings?"
+label(data$rec9_other)="If other, please specify"
+label(data$mmg_date10)="Screening (NOT diagnostic) mammogram date 10"
+label(data$location10)="Location of clinic where screening performed"
+label(data$rec10)="Recommendation after mammogram"
+label(data$biopsy_finding10)="If biopsied, what was the pathological finding? "
+label(data$more_imaging10)="If further imaging, what was the imaging and findings?"
+label(data$rec10_other)="If other, please specify"
+label(data$mmg_date11)="Screening (NOT diagnostic) mammogram date 11"
+label(data$location11)="Location of clinic where screening performed"
+label(data$rec11)="Recommendation after mammogram"
+label(data$biopsy_finding11)="If biopsied, what was the pathological finding? "
+label(data$more_imaging11)="If further imaging, what was the imaging and findings?"
+label(data$rec11_other)="If other, please specify"
+label(data$mmg_date12)="Screening (NOT diagnostic) mammogram date 12"
+label(data$location12)="Location of clinic where screening performed"
+label(data$rec12)="Recommendation after mammogram"
+label(data$biopsy_finding12)="If biopsied, what was the pathological finding? "
+label(data$more_imaging12)="If further imaging, what was the imaging and findings?"
+label(data$rec12_other)="If other, please specify"
+label(data$mmg_date13)="Screening (NOT diagnostic) mammogram date 13"
+label(data$location13)="Location of clinic where screening performed"
+label(data$rec13)="Recommendation after mammogram"
+label(data$biopsy_finding13)="If biopsied, what was the pathological finding? "
+label(data$more_imaging13)="If further imaging, what was the imaging and findings?"
+label(data$rec13_other)="If other, please specify"
+label(data$mmg_date14)="Screening (NOT diagnostic) mammogram date 14"
+label(data$location14)="Location of clinic where screening performed"
+label(data$rec14)="Recommendation after mammogram"
+label(data$biopsy_finding14)="If biopsied, what was the pathological finding? "
+label(data$more_imaging14)="If further imaging, what was the imaging and findings?"
+label(data$rec14_other)="If other, please specify"
+label(data$mmg_date15)="Screening (NOT diagnostic) mammogram date 15"
+label(data$location15)="Location of clinic where screening performed"
+label(data$rec15)="Recommendation after mammogram"
+label(data$biopsy_finding15)="If biopsied, what was the pathological finding? "
+label(data$more_imaging15)="If further imaging, what was the imaging and findings?"
+label(data$rec15_other)="If other, please specify"
+label(data$breastcx_date)="Date of breast cancer diagnosis"
+label(data$age_dx)="Age at diagnosis"
+label(data$breastcx_type)="Type of cancer"
+label(data$breastcx_other)="If other, please specify"
+label(data$breastcx_stage)="Breast cancer stage"
+label(data$receptor___1)="Receptor status  (choice=ER+)"
+label(data$receptor___5)="Receptor status  (choice=ER negative)"
+label(data$receptor___2)="Receptor status  (choice=PR+)"
+label(data$receptor___6)="Receptor status  (choice=PR negative)"
+label(data$receptor___3)="Receptor status  (choice=Her2+)"
+label(data$receptor___7)="Receptor status  (choice=Her2 negative)"
+label(data$receptor___8)="Receptor status  (choice=Unknown)"
+label(data$receptor___4)="Receptor status  (choice=Other)"
+label(data$receptor_other)="If other, please specify"
+label(data$mutation)="Presence of breast cancer genetic mutation"
+label(data$mutation_type)="Type of mutation"
+label(data$treatment___1)="Treatment (choice=Neoadjuvant chemotherapy)"
+label(data$treatment___2)="Treatment (choice=Pre-operative radiation)"
+label(data$treatment___3)="Treatment (choice=Lumpectomy with radiation (BCT))"
+label(data$treatment___4)="Treatment (choice=Skin sparing mastectomy)"
+label(data$treatment___5)="Treatment (choice=Nipple sparing mastectomy)"
+label(data$treatment___6)="Treatment (choice=Post operative radiation)"
+label(data$treatment___7)="Treatment (choice=SNLB)"
+label(data$treatment___8)="Treatment (choice=LAD)"
+label(data$treatment___9)="Treatment (choice=Other)"
+label(data$treatment_other)="If other, please specify"
+label(data$comments)="Comments (please write any comments here that were not captured by chart review)"
+label(data$transition_date)="Approximate date of gender-affirming transition"
+label(data$pcp_name)="Name of PCP"
+label(data$prostate_surghx)="Previous surgery on prostate?"
+label(data$prostate_surg)="If yes, which surgery?"
+label(data$prostate_surg_other)="If other, please indicate surgery:"
+label(data$surg_path)="Path from surgery (if performed)"
+label(data$familyhx_prostate___1)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=No family history)"
+label(data$familyhx_prostate___2)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=Unknown family history)"
+label(data$familyhx_prostate___3)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=One first degree relative with prostate cancer)"
+label(data$familyhx_prostate___4)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=More than one first degree relative with prostate cancer)"
+label(data$familyhx_prostate___5)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=One second degree relative with prostate cancer)"
+label(data$familyhx_prostate___6)="Family history of prostate cancer (first degree relative is defined as: father, brother, son; second degree relative is not first degree: uncle, grandfather, etc.): (choice=More than one second degree relative with prostate cancer)"
+label(data$age_famhx_dx_prostate)="If positive family history, age family member(s) was(were) diagnosed (ex: uncle - 55, father - 70):"
+label(data$familyhx_cancer___1)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=No family history of any cancer)"
+label(data$familyhx_cancer___2)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=Unknown family history)"
+label(data$familyhx_cancer___3)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=One first degree relative with  cancer)"
+label(data$familyhx_cancer___4)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=More than one first degree relative with cancer)"
+label(data$familyhx_cancer___5)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=One second degree relative with cancer)"
+label(data$familyhx_cancer___6)="Family history of ANY cancer (first degree relative is defined as: father, mother, sibling, child; second degree relative is not first degree: aunt, uncle, grandparents, etc.): (choice=More than one second degree relative with cancer)"
+label(data$famhx_cancer_type)="If positive family cancer history, please indicate cancer type and relative (i.e. Maternal Grandmother - Breast Cancer):"
+label(data$fam_genetics)="Family history of genetic mutation?"
+label(data$fam_mutation_type)="If family history of genetic mutation present, please indicate what mutation:"
+label(data$breast_screening_complete)="Complete?"
+
+#Setting Factors(will create new variable for factors)
+data$sab.factor = factor(data$sab,levels=c("1","2","3"))
+data$gi.factor = factor(data$gi,levels=c("1","2","3","4"))
+data$ethnicity.factor = factor(data$ethnicity,levels=c("1","2","3","4","6","5"))
+data$language.factor = factor(data$language,levels=c("1","2","3"))
+data$employment.factor = factor(data$employment,levels=c("1","2","3","4","5","6","7"))
+data$education.factor = factor(data$education,levels=c("1","2","3","4","5"))
+data$insurance.factor = factor(data$insurance,levels=c("1","2","3"))
+data$menstrual_period.factor = factor(data$menstrual_period,levels=c("1","2","3","4"))
+data$familyhx___1.factor = factor(data$familyhx___1,levels=c("0","1"))
+data$familyhx___2.factor = factor(data$familyhx___2,levels=c("0","1"))
+data$familyhx___3.factor = factor(data$familyhx___3,levels=c("0","1"))
+data$familyhx___4.factor = factor(data$familyhx___4,levels=c("0","1"))
+data$familyhx___5.factor = factor(data$familyhx___5,levels=c("0","1"))
+data$familyhx___6.factor = factor(data$familyhx___6,levels=c("0","1"))
+data$age_birth.factor = factor(data$age_birth,levels=c("1","2","3","4","5","6"))
+data$hormones.factor = factor(data$hormones,levels=c("1","2"))
+data$hormone_type___1.factor = factor(data$hormone_type___1,levels=c("0","1"))
+data$hormone_type___2.factor = factor(data$hormone_type___2,levels=c("0","1"))
+data$hormone_type___3.factor = factor(data$hormone_type___3,levels=c("0","1"))
+data$hormone_type___4.factor = factor(data$hormone_type___4,levels=c("0","1"))
+data$hormone_type___5.factor = factor(data$hormone_type___5,levels=c("0","1"))
+data$hormone_type___6.factor = factor(data$hormone_type___6,levels=c("0","1"))
+data$hormone_type___7.factor = factor(data$hormone_type___7,levels=c("0","1"))
+data$menopause.factor = factor(data$menopause,levels=c("1","2","3"))
+data$gas.factor = factor(data$gas,levels=c("1","0"))
+data$gas_procedures___1.factor = factor(data$gas_procedures___1,levels=c("0","1"))
+data$gas_procedures___2.factor = factor(data$gas_procedures___2,levels=c("0","1"))
+data$gas_procedures___3.factor = factor(data$gas_procedures___3,levels=c("0","1"))
+data$gas_procedures___4.factor = factor(data$gas_procedures___4,levels=c("0","1"))
+data$gas_procedures___5.factor = factor(data$gas_procedures___5,levels=c("0","1"))
+data$gas_procedures___6.factor = factor(data$gas_procedures___6,levels=c("0","1"))
+data$gas_procedures___7.factor = factor(data$gas_procedures___7,levels=c("0","1"))
+data$gas_procedures___8.factor = factor(data$gas_procedures___8,levels=c("0","1"))
+data$gas_procedures___9.factor = factor(data$gas_procedures___9,levels=c("0","1"))
+data$gas_procedures___10.factor = factor(data$gas_procedures___10,levels=c("0","1"))
+data$gas_procedures___11.factor = factor(data$gas_procedures___11,levels=c("0","1"))
+data$not_a_mammo.factor = factor(data$not_a_mammo,levels=c("1","2","3"))
+data$not_a_mammo_type.factor = factor(data$not_a_mammo_type,levels=c("1","2","3"))
+data$rec1.factor = factor(data$rec1,levels=c("1","2","3","4"))
+data$rec2.factor = factor(data$rec2,levels=c("1","2","3","4"))
+data$rec3.factor = factor(data$rec3,levels=c("1","2","3","4"))
+data$rec4.factor = factor(data$rec4,levels=c("1","2","3","4"))
+data$rec5.factor = factor(data$rec5,levels=c("1","2","3","4"))
+data$rec6.factor = factor(data$rec6,levels=c("1","2","3","4"))
+data$rec7.factor = factor(data$rec7,levels=c("1","2","3","4"))
+data$rec8.factor = factor(data$rec8,levels=c("1","2","3","4"))
+data$rec9.factor = factor(data$rec9,levels=c("1","2","3","4"))
+data$rec10.factor = factor(data$rec10,levels=c("1","2","3","4"))
+data$rec11.factor = factor(data$rec11,levels=c("1","2","3","4"))
+data$rec12.factor = factor(data$rec12,levels=c("1","2","3","4"))
+data$rec13.factor = factor(data$rec13,levels=c("1","2","3","4"))
+data$rec14.factor = factor(data$rec14,levels=c("1","2","3","4"))
+data$rec15.factor = factor(data$rec15,levels=c("1","2","3","4"))
+data$breastcx_type.factor = factor(data$breastcx_type,levels=c("1","2","3","4","5"))
+data$breastcx_stage.factor = factor(data$breastcx_stage,levels=c("1","2","3","4","5","6"))
+data$receptor___1.factor = factor(data$receptor___1,levels=c("0","1"))
+data$receptor___5.factor = factor(data$receptor___5,levels=c("0","1"))
+data$receptor___2.factor = factor(data$receptor___2,levels=c("0","1"))
+data$receptor___6.factor = factor(data$receptor___6,levels=c("0","1"))
+data$receptor___3.factor = factor(data$receptor___3,levels=c("0","1"))
+data$receptor___7.factor = factor(data$receptor___7,levels=c("0","1"))
+data$receptor___8.factor = factor(data$receptor___8,levels=c("0","1"))
+data$receptor___4.factor = factor(data$receptor___4,levels=c("0","1"))
+data$mutation.factor = factor(data$mutation,levels=c("1","2"))
+data$treatment___1.factor = factor(data$treatment___1,levels=c("0","1"))
+data$treatment___2.factor = factor(data$treatment___2,levels=c("0","1"))
+data$treatment___3.factor = factor(data$treatment___3,levels=c("0","1"))
+data$treatment___4.factor = factor(data$treatment___4,levels=c("0","1"))
+data$treatment___5.factor = factor(data$treatment___5,levels=c("0","1"))
+data$treatment___6.factor = factor(data$treatment___6,levels=c("0","1"))
+data$treatment___7.factor = factor(data$treatment___7,levels=c("0","1"))
+data$treatment___8.factor = factor(data$treatment___8,levels=c("0","1"))
+data$treatment___9.factor = factor(data$treatment___9,levels=c("0","1"))
+data$prostate_surghx.factor = factor(data$prostate_surghx,levels=c("1","2"))
+data$prostate_surg.factor = factor(data$prostate_surg,levels=c("1","2","4","5","6","7","3"))
+data$familyhx_prostate___1.factor = factor(data$familyhx_prostate___1,levels=c("0","1"))
+data$familyhx_prostate___2.factor = factor(data$familyhx_prostate___2,levels=c("0","1"))
+data$familyhx_prostate___3.factor = factor(data$familyhx_prostate___3,levels=c("0","1"))
+data$familyhx_prostate___4.factor = factor(data$familyhx_prostate___4,levels=c("0","1"))
+data$familyhx_prostate___5.factor = factor(data$familyhx_prostate___5,levels=c("0","1"))
+data$familyhx_prostate___6.factor = factor(data$familyhx_prostate___6,levels=c("0","1"))
+data$familyhx_cancer___1.factor = factor(data$familyhx_cancer___1,levels=c("0","1"))
+data$familyhx_cancer___2.factor = factor(data$familyhx_cancer___2,levels=c("0","1"))
+data$familyhx_cancer___3.factor = factor(data$familyhx_cancer___3,levels=c("0","1"))
+data$familyhx_cancer___4.factor = factor(data$familyhx_cancer___4,levels=c("0","1"))
+data$familyhx_cancer___5.factor = factor(data$familyhx_cancer___5,levels=c("0","1"))
+data$familyhx_cancer___6.factor = factor(data$familyhx_cancer___6,levels=c("0","1"))
+data$fam_genetics.factor = factor(data$fam_genetics,levels=c("1","2","3"))
+data$hormone_screening1.factor = factor(data$hormone_screening1,levels=c("1","2","3"))
+data$breast_screening_complete.factor = factor(data$breast_screening_complete,levels=c("0","1","2"))
+
+levels(data$sab.factor)=c("Male","Female","Intersex")
+levels(data$gi.factor)=c("Male","Female","Non binary","Other")
+levels(data$ethnicity.factor)=c("White","African/American","American Indian or Alaskan Native","Asian, Native Hawaiian or other Pacific Islander only","Hispanic/Latinx","Other race only, non-Hispanic")
+levels(data$language.factor)=c("English","Spanish","Other")
+levels(data$employment.factor)=c("Employed - full time","Employed - part time","Unemployed","Student","Retired","Out of labor force (disability, etc.)","Unknown")
+levels(data$education.factor)=c("Did not graduate high school","Graduated high school","Attended college/technical school","Graduated college/technical school","Unknown")
+levels(data$insurance.factor)=c("Public","Private","Unknown")
+levels(data$menstrual_period.factor)=c("Unknown","7-11 years old","12-13 years old",">13 years old")
+levels(data$familyhx___1.factor)=c("Unchecked","Checked")
+levels(data$familyhx___2.factor)=c("Unchecked","Checked")
+levels(data$familyhx___3.factor)=c("Unchecked","Checked")
+levels(data$familyhx___4.factor)=c("Unchecked","Checked")
+levels(data$familyhx___5.factor)=c("Unchecked","Checked")
+levels(data$familyhx___6.factor)=c("Unchecked","Checked")
+levels(data$age_birth.factor)=c("Unknown","No births","< 20 years old","20-24 years old","25-29 years old","≥30 years old")
+levels(data$hormones.factor)=c("Yes","No")
+levels(data$hormone_type___1.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___2.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___3.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___4.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___5.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___6.factor)=c("Unchecked","Checked")
+levels(data$hormone_type___7.factor)=c("Unchecked","Checked")
+levels(data$menopause.factor)=c("Pre-menopausal","Post-menopausal","Unknown")
+levels(data$gas.factor)=c("Yes","No")
+levels(data$gas_procedures___1.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___2.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___3.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___4.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___5.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___6.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___7.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___8.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___9.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___10.factor)=c("Unchecked","Checked")
+levels(data$gas_procedures___11.factor)=c("Unchecked","Checked")
+levels(data$not_a_mammo.factor)=c("Yes","No","Unknown")
+levels(data$not_a_mammo_type.factor)=c("Breast Ultrasound","Breast MRI","Other")
+levels(data$rec1.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec2.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec3.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec4.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec5.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec6.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec7.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec8.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec9.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec10.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec11.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec12.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec13.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec14.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$rec15.factor)=c("Continue annual screening","Biopsy with pathology","Further imaging","Other")
+levels(data$breastcx_type.factor)=c("DCIS","LCIS","Invasive DC","Invasive LC","Other")
+levels(data$breastcx_stage.factor)=c("Stage 0","Stage 1","Stage 2","Stage 3","Stage 4","No stage")
+levels(data$receptor___1.factor)=c("Unchecked","Checked")
+levels(data$receptor___5.factor)=c("Unchecked","Checked")
+levels(data$receptor___2.factor)=c("Unchecked","Checked")
+levels(data$receptor___6.factor)=c("Unchecked","Checked")
+levels(data$receptor___3.factor)=c("Unchecked","Checked")
+levels(data$receptor___7.factor)=c("Unchecked","Checked")
+levels(data$receptor___8.factor)=c("Unchecked","Checked")
+levels(data$receptor___4.factor)=c("Unchecked","Checked")
+levels(data$mutation.factor)=c("Yes","No")
+levels(data$treatment___1.factor)=c("Unchecked","Checked")
+levels(data$treatment___2.factor)=c("Unchecked","Checked")
+levels(data$treatment___3.factor)=c("Unchecked","Checked")
+levels(data$treatment___4.factor)=c("Unchecked","Checked")
+levels(data$treatment___5.factor)=c("Unchecked","Checked")
+levels(data$treatment___6.factor)=c("Unchecked","Checked")
+levels(data$treatment___7.factor)=c("Unchecked","Checked")
+levels(data$treatment___8.factor)=c("Unchecked","Checked")
+levels(data$treatment___9.factor)=c("Unchecked","Checked")
+levels(data$breast_screening_complete.factor)=c("Incomplete","Unverified","Complete")
+
+```
+
+#Get rid of unwanted variables (some variables were collected on additional cancers)
+
+```{r}
+data <- data[,-c(543:701)]
+data <- data[,-c(188:468)]
+```
+
+#Removing and renaming variables
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+
+#Get rid of repeated variables
+toremove <- c("breast_screening_complete",
+                        "sab",
+                        "gi",
+                        "ethnicity",
+                        "language",
+                        "employment",
+                        "education",
+                        "insurance",
+                        "menstrual_period",
+                        "familyhx___1",
+                        "familyhx___2",
+                        "familyhx___3",
+                        "familyhx___4",
+                        "familyhx___5",
+                        "familyhx___6",
+                        "age_birth",
+                        "hormones",
+                        "hormone_type___1",
+                        "hormone_type___2",
+                        "hormone_type___3",
+                        "hormone_type___4",
+                        "hormone_type___5",
+                        "hormone_type___6",
+                        "hormone_type___7",
+                        "menopause",
+                        "gas",
+                        "gas_procedures___1",
+                        "gas_procedures___2",
+                        "gas_procedures___3",
+                        "gas_procedures___4",
+                        "gas_procedures___5",
+                        "gas_procedures___6",
+                        "gas_procedures___7",
+                        "gas_procedures___8",
+                        "gas_procedures___9",
+                        "gas_procedures___10",
+                        "gas_procedures___11",
+                        "not_a_mammo",
+                        "not_a_mammo_type",
+                        "rec1",
+                        "rec2",
+                        "rec3",
+                        "rec4",
+                        "rec5",
+                        "rec6",
+                        "rec7",
+                        "rec8",
+                        "rec9",
+                        "rec10",
+                        "rec11",
+                        "rec12", 
+                        "rec13",
+                        "rec14",
+                        "rec15",
+                        "breastcx_type",
+                        "breastcx_stage",
+                        "receptor___1",
+                        "receptor___2",
+                        "receptor___3",
+                        "receptor___4",
+                        "receptor___5",
+                        "receptor___6",
+                        "receptor___7",
+                        "receptor___8",
+                        "mutation",
+                        "treatment___1",
+                        "treatment___2",
+                        "treatment___3",
+                        "treatment___4",
+                        "treatment___5",
+                        "treatment___6",
+                        "treatment___7",
+                        "treatment___8",
+                        "treatment___9")
+
+data <- select(data, -toremove)
+
+
+#Get rid of empty variables (variablea for which no data was collected)
+
+toremove2 <- names(which(sapply(data, function(x)all(is.na(x))) == TRUE))
+
+data <- select(data, -toremove2)
+
+data <- data %>% rename(sab = sab.factor,
+                        gi = gi.factor,
+                        ethnicity = ethnicity.factor,
+                        language = language.factor,
+                        employment = employment.factor,
+                        education = education.factor,
+                        insurance = insurance.factor,
+                        menstrual_period = menstrual_period.factor,
+                        nofam = familyhx___1.factor,
+                        unknownfam = familyhx___2.factor,
+                        onefirstfam = familyhx___3.factor, #one first degree relative
+                        morefirstfam = familyhx___4.factor, #more than one first degree
+                        onesecondfam = familyhx___5.factor,
+                        moresecondfam = familyhx___6.factor,
+                        age_birth = age_birth.factor,
+                        hormones = hormones.factor,
+                        estradiol = hormone_type___1.factor,
+                        progesterone = hormone_type___2.factor,
+                        spiro = hormone_type___3.factor,
+                        testosterone = hormone_type___4.factor,
+                        leupro = hormone_type___5.factor,
+                        supprelin = hormone_type___6.factor,
+                        otherhormone = hormone_type___7.factor,
+                        menopause = menopause.factor,
+                        gas = gas.factor,
+                        mastectomy = gas_procedures___1.factor,
+                        breastaug = gas_procedures___2.factor,
+                        ooph = gas_procedures___3.factor, 
+                        hysterectomy = gas_procedures___4.factor,
+                        orchiectomy = gas_procedures___5.factor,
+                        penectomy = gas_procedures___6.factor,
+                        facialfem = gas_procedures___7.factor,
+                        facialmasc = gas_procedures___8.factor,
+                        phallo = gas_procedures___9.factor,
+                        vaginoplasty = gas_procedures___10.factor,
+                        othergas = gas_procedures___11.factor,
+                        rec1 = rec1.factor,
+                        rec2 = rec2.factor,
+                        rec3 = rec3.factor,
+                        rec4 = rec4.factor, 
+                        rec5 = rec5.factor,
+                        rec6 = rec6.factor,
+                        rec7 = rec7.factor,
+                        rec8 = rec8.factor,
+                        rec9 = rec9.factor,
+                        rec10 = rec10.factor,
+                        rec11 = rec11.factor,
+                        rec12 = rec12.factor,
+                        rec13 = rec13.factor,
+                        #rec14 = rec14.factor,
+                        #rec15 = rec15.factor,
+                        not_a_mammo = not_a_mammo.factor,
+                        not_a_mammo_type = not_a_mammo_type.factor,
+                        #not_a_mammo_findings = not_a_mammo_findings.factor,
+                        breastcx_type = breastcx_type.factor,
+                        breastcxz_stage = breastcx_stage.factor,
+                        ERpos = receptor___1.factor,
+                        ERneg = receptor___5.factor,
+                        PRpos = receptor___2.factor,
+                        PRneg = receptor___6.factor,
+                        her2pos = receptor___3.factor,
+                        her2neg = receptor___7.factor,
+                        receptunknown = receptor___8.factor,
+                        receptother = receptor___4.factor,
+                        mutation = mutation.factor,
+                        neoadjuvchemo = treatment___1.factor,
+                        preopradiation = treatment___2.factor,
+                        breastconvtherapy = treatment___3.factor,
+                        skinsparemastect = treatment___4.factor,
+                        nsm = treatment___5.factor,
+                        postopradiation = treatment___6.factor,
+                        snlb = treatment___7.factor,
+                        lad = treatment___8.factor,
+                        treatother = treatment___9.factor
+                        )
+
+```
+
+## Creating variables that we need and fixing other variables
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+
+#We will have to get the age variable in years
+
+data$today <- as.POSIXct(as.Date("2021-04-25"), format = "%Y-%m-%d")
+data$dob <- as.POSIXct(data$dob, format = "%Y-%m-%d")
+data$age <- difftime(data$today, data$dob, units = "weeks")
+data$age <- time_length(interval(data$dob, data$today), "year")
+
+#Age at mammogram and fixing mammogram dates
+
+mmgcols <- names(data[, grep("mmg", names(data))])
+data[,mmgcols] <- lapply(data[,mmgcols], FUN = as.POSIXct, format = "%Y-%m-%d")
+data$mammoage <- time_length(interval(data$dob, data$mmg_date1), "year")
+
+#Parity variable: some of these were documented inconsistently
+
+data[which(data$parity == "GXP1"), "parity"] <- "G1P1"
+data[which(data$parity == "P1"), "parity"] <- "G1P1"
+
+data[which(data$parity == "Null"), "parity"] <- "null"
+data[which(data$parity == "unknown"), "parity"] <- "null"
+
+data[which(data$parity == "G0"), "parity"] <- "G0P0"
+
+#Creating a binary mammography variable: this variable will indicate if the patient had mammography screening or not based on whether they had a "Date of First Mammogram" filled out
+
+data$mammography <- factor(ifelse(is.na(data$mmg_date1), "No", "Yes"))
+
+#Fix education/employment/insurance variables: we want to factor collapse these variables
+library(plyr)
+
+data$education <- as.factor(data$education)
+data$education <- revalue(data$education, c("Did not graduate high school" = "High School or Less",
+                          "Graduated high school" = "High School or Less",
+                          "Attended college/technical school" = "College",
+                          "Graduated college/technical school" = "College",
+                          "Unknown" = "Unknown"))
+
+
+data$employment <- as.factor(data$employment)
+data$employment <- revalue(data$employment, c("Employed - full time" = "Employed",
+                                              "Employed - part time" = "Employed",
+                                              "Unemployed" = "Unemployed",
+                                              "Student" = "Unemployed",
+                                              "Retired" = "Retired",
+                                              "Out of labor force (disability, etc.)" = "Out of Force",
+                                              "Unknown" = "Unknown"))
+
+#Creating ethnicity variable with collapsed levels
+
+data$ethnicity2 <- as.factor(data$ethnicity)
+data$ethnicity2 <- revalue(data$ethnicity2, c("White" = "White",
+                                              "African/American" = "AA", 
+                                              "American Indian or Alaskan Native" = "Other",
+                                              "Asian, Native Hawaiian or other Pacific Islander only" = "Other",
+                                              "Hispanic/Latinx" = "Latinx",
+                                              "Other race only, non-Hispanic" = "Other"))
+
+#Fix gas procedure variables (gas = gender affirming surgery)
+
+data[(data$gas_procedure_other) == "", "gas_procedure_other"] <- NA 
+
+data[(!is.na(data$gas_procedure_other)), c("mrn", "gas_procedure_other")]
+
+data[(data$comments) == "", "comments"] <- NA 
+
+comments <- data[(!is.na(data$comments)), c("record_id", "mrn", "comments")]
+
+#The records of patients who were on remote hrt are: 
+#107, 216, 160, 222, 182, 19, 119
+
+#Remote and current hormone use variable
+data$hrtall <- data$hormones
+data[c(107, 216, 160, 222, 182, 19, 119), "hrtall"] <- "Yes"
+
+#Hormone use (some patients didn't have hormone use properly documented): 
+# 107 < 5 years
+# 216 > 5 years
+# 160 Unknown
+# 222 < 5 years
+# 182 Unknown
+# 19 > 5 years
+# 119 > 5 years
+
+which(grepl("duration", names(data), ignore.case = T, fixed = F))
+
+#"otherhormone_duration" "estrogen_duration"     "prog_duration"         "spiro_duration"        "test_duration"   
+
+```
+
+#Fixing the factors to reassign unknown as NA
+
+```{r}
+
+data$insurance <- ifelse(data$insurance == "Unknown", NA, data$insurance)
+data$insurance <- as.factor(data$insurance)
+levels(data$insurance) <- c("Public", "Private")
+data[(data$employment) == "Unknown", "employment"] <- NA 
+data$employment <- as.factor(data$employment)
+data$employment <- droplevels(data$employment)
+data$education <- ifelse(data$education == "Unknown", NA, data$education)
+data$education <- as.factor(data$education)
+levels(data$education) <- c("High School or Less", "College")
+
+#Making variables factors 
+tofactor <- c("mammography",
+              "employment",
+              "insurance",
+              "education",
+              "gas",
+              "hormones")
+
+data[,tofactor] <- lapply(data[,tofactor], as.factor)
+
+data$mastectomy_date <- ifelse(data$mastectomy_date == "", NA, data$mastectomy_date)
+data$mastectomy_date <- as.POSIXct(data$mastectomy_date, format = "%Y-%m-%d")
+
+```
+
+## Remove breast cx patients: patients with a prior history of breast cancer should be excluded as they no longer receive screening mammography and have more detailed monitoring
+
+```{r}
+
+data[which(data$breastcx_date != ""), c("record_id", "mrn")]
+ # data[which(!is.na(data$breastcx_type)), c("record_id", "mrn")]
+
+breastcx <- data[which(data$breastcx_date != ""), ]
+
+row_variables4 <- c("breastcx_type",
+                    "breastcxz_stage",
+                    "ERpos",
+                    "ERneg", 
+                    "PRpos", 
+                    "PRneg", 
+                    "her2pos", 
+                    "her2neg", 
+                    "receptunknown",
+                    "receptother", 
+                    "mutation", 
+                    "neoadjuvchemo", 
+                    "preopradiation", 
+                    "breastconvtherapy", 
+                    "skinsparemastect", 
+                    "nsm", 
+                    "postopradiation", 
+                    "snlb", 
+                    "lad", 
+                    "treatother", 
+                    "treatment_other",
+                    "comments")
+
+#Creating a table of breast cancer patients with details of their cancer
+breasttable <- breastcx[,row_variables4]
+kable(breasttable)
+
+breastcxmrns <- as.vector(breastcx$mrn)
+
+#Removing the breast cancer patients
+data <- filter(data, !(mrn %in% breastcxmrns))
+
+```
+
+## Remove the intersex patient, and fix zip code
+
+```{r}
+#There is one intersex patient who should be removed from the dataset
+data <- data %>% filter(sab != "Intersex")
+
+#Data exploration found loss of a trailing zero in a zipcode, we will fix this
+data[which(data$zip == 2838), "zip"] <- "02838"
+data$zip <- as.character(data$zip)
+```
+
+## Converting zip codes to counties 
+
+```{r}
+
+#Upload csv file containing patient zip codes, state, and county information
+zips <- read.csv("/Users/mona/Desktop/Northwestern Research/NLP/Breast/Zips.csv")
+
+zips <- zips %>% select(Var1, STATE, County)
+
+zips[which(zips$Var1 == 2838), "Var1"] <- "02838"
+zips$Var1 <- as.character(zips$Var1)
+
+colnames(zips) <- c("zip", "state", "county")
+
+#Join the zip code data to the working dataset
+data <- left_join(data, zips, by = "zip")
+
+```
+
+
+#EDA and visualizations
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+
+#Distribution of sex assigned at birth and gender identity
+
+table(data$gi, data$sab)
+
+ggplot(data, aes(x=sab, fill = gi)) + 
+    geom_bar(position = "fill") + 
+    ggtitle("Sex Assigned at Birth and Gender Identity") + 
+    xlab("Sex Assigned at Birth") + 
+    ylab("Proportion") + 
+    guides(fill=guide_legend(title="Gender Identity")) + 
+    scale_fill_manual("legend", values = c("Male" = "lightblue", "Female" = "firebrick", "Non binary" = "black"))
+
+
+row_variables1 <- c("age",
+                   "sab",
+                   "gi",
+                   "ethnicity",
+                   "employment",
+                   "education",
+                   "insurance",
+                   "menstrual_period",
+                   "nofam",
+                   "unknownfam",
+                   "onefirstfam",
+                   "morefirstfam",
+                   "onesecondfam",
+                   "moresecondfam",
+                   "menopause")
+
+demographicsall <- print(CreateTableOne(vars = row_variables1, 
+                                        data = data, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables1,
+                         exact = row_variables1,
+                         width = 1000)
+                 
+```
+
+## Creating sub-groups based on sex and gender identity
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+
+transfemale <- data %>% filter(gi == "Female") #Transfemale
+
+transmale <- data %>% filter(gi == "Male") #Transmale
+  
+NBAMAB <- data %>% filter(gi == "Non binary") %>% filter(sab == "Male") #Non-binary assigned male at birth
+
+NBAFAB <- data %>% filter(gi == "Non binary") %>% filter(sab == "Female") #Non-binary assigned female at birth
+  
+
+afab <- data %>% filter(sab == "Female") #Assigned female at birth
+
+amab <- data %>% filter(sab == "Male") #Assigned male at birth
+
+#afab and on hormones  
+afabhormones <- data %>% filter(sab == "Female") %>% filter(hormones == "Yes")
+
+#amab and on hormones
+amabhormones <- data %>% filter(sab == "Male") %>% filter(hormones == "Yes")
+  
+```
+
+## Demographics for subgroups
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, results = "hide"}
+
+
+demographicsafab <- print(CreateTableOne(vars = row_variables1, 
+                                                data = afab, 
+                                                includeNA = T), 
+                                 showAllLevels = TRUE,                        
+                                 nonnormal = row_variables1,
+                                 exact = row_variables1,
+                                 width = 1000)
+
+demographicsamab <- print(CreateTableOne(vars = row_variables1, 
+                                              data = amab, 
+                                              includeNA = T), 
+                               showAllLevels = TRUE,                        
+                               nonnormal = row_variables1,
+                               exact = row_variables1,
+                               width = 1000)
+
+demographicsafabhormones <- print(CreateTableOne(vars = row_variables1, 
+                                           data = afabhormones, 
+                                           includeNA = T), 
+                            showAllLevels = TRUE,                        
+                            nonnormal = row_variables1,
+                            exact = row_variables1,
+                            width = 1000)
+
+demographicsamabhormones <- print(CreateTableOne(vars = row_variables1, 
+                                           data = amabhormones, 
+                                           includeNA = T), 
+                            showAllLevels = TRUE,                        
+                            nonnormal = row_variables1,
+                            exact = row_variables1,
+                            width = 1000)
+
+```
+
+## Tables with TGNB specific information
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, results = "hide"}
+
+row_variables2 <- c("hormones",
+                    "estradiol",
+                    "estrogen_duration",
+                    "progesterone",
+                    "prog_duration",
+                    "spiro",
+                    "spiro_duration",
+                    "testosterone",
+                    "test_duration",
+                    "leupro",
+                    "supprelin",
+                    "otherhormone",
+                    "gas",
+                    "mastectomy",
+                    "breastaug",
+                    "ooph",
+                    "hysterectomy",
+                    "orchiectomy", 
+                    "penectomy", 
+                    "facialfem", 
+                    "facialmasc", 
+                    "phallo", 
+                    "vaginoplasty", 
+                    "othergas"
+                    )
+
+tgnball <- print(CreateTableOne(vars = row_variables2, 
+                                        data = data, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables2,
+                         exact = row_variables2,
+                         width = 1000)
+
+```
+
+## Tables with TGNB-specific information by subgroup
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, results = "hide"}
+
+tgnbafab <- print(CreateTableOne(vars = row_variables2, 
+                                        data = afab, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables2,
+                         exact = row_variables2,
+                         width = 1000)
+
+
+tgnbamab <- print(CreateTableOne(vars = row_variables2, 
+                                        data = amab, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables2,
+                         exact = row_variables2,
+                         width = 1000)
+
+tgnbafabhormones <- print(CreateTableOne(vars = row_variables2, 
+                                        data = afabhormones, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables2,
+                         exact = row_variables2,
+                         width = 1000)
+
+tgnbamabhormones <- print(CreateTableOne(vars = row_variables2, 
+                                        data = amabhormones, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables2,
+                         exact = row_variables2,
+                         width = 1000)
+
+```
+
+
+## Mammography information for ASSIGNED FEMALE AT BIRTH
+
+```{r}
+#We want to create the right screening group
+#40 years was chosen as the eligible age of screening based on NCCN guidelines, however we gave patients a 2 year grace period to obtain their first screenings
+#This meant the age of eligibility of first mammogram was 15341 days, or 42 years * 365.25 days/year
+
+afab <- afab %>% mutate(eligibilitydate = dob + days(365.25*40)) #exclude mastectomy before 40 years
+
+#Lifetime of years eligible for screening (prior to obtaining gender affirming mastectomy)
+afab <- afab %>% mutate(yearseligible = difftime(mastectomy_date, eligibilitydate, units = "days"))
+
+#Date of study endpoint
+afab$today <- as.POSIXct(as.Date("2021-04-25"), format = "%Y-%m-%d")
+
+afab$yearseligible <- ifelse(is.na(afab$yearseligible) == T,
+                             difftime(afab$today, afab$eligibilitydate, units == "days"),
+                             afab$yearseligible)
+
+afab$yearseligible <- afab$yearseligible/365.25
+
+#Some patients are negative years eligible because they got their mastectomy before they reached eligible screening age, we want to filter these people out
+afabgroup11 <- afab %>% filter(yearseligible > 0)
+
+test <- afab %>% filter(is.na(mmg_date1) == F)
+test <- test %>% filter(mastectomy == "Checked")
+test <- test %>% arrange(mrn)
+afabgroup11 <- afabgroup11 %>% arrange(mrn)
+#All the patients from the numerator are in the denominator  
+
+#USPSTF guidelines___________________________________________
+afab <- afab %>% mutate(eligibilitydate = dob + days(18263)) #exclude mastectomy before 50 years
+
+afab <- afab %>% mutate(yearseligible = difftime(mastectomy_date, eligibilitydate, units = "days"))
+
+afab$today <- as.POSIXct(as.Date("2021-04-25"), format = "%Y-%m-%d")
+
+afab$yearseligible <- ifelse(is.na(afab$yearseligible) == T,
+                             difftime(afab$today, afab$eligibilitydate, units == "days"),
+                             afab$yearseligible)
+
+afab$yearseligible <- afab$yearseligible/365.25
+
+afabgroup12 <- afab %>% filter(yearseligible > 0)
+
+test <- afabgroup7 %>% filter(is.na(mmg_date1) == F)
+test <- test %>% filter(mastectomy == "Checked")
+test <- test %>% arrange(mrn)
+afabgroup12 <- afabgroup12 %>% arrange(mrn)
+
+
+#Here is an example of how screening rates were calculated for each group
+#Numerator is the number of patients who had a date entered for the "date of first mammogram variable
+#Denominator is the number of all patients in the group
+percafab<- (sum(is.na(afabgroup$mmg_date1) == F))/nrow(afabgroup)
+print(percafabgroup)
+
+#numerator
+sum(is.na(afabgroup$mmg_date1) == F) 
+
+#denominator 
+nrow(afabgroup)
+
+
+#Looking at patients who did NOT have gender affirming mastectomies performed
+nomastafab <- afab %>% filter(mastectomy == "Unchecked")
+
+percnomastafab <- (sum(is.na(nomastafab$mmg_date1) == F))/nrow(nomastafab)
+print(nomastafab)
+
+#numerator
+sum(is.na(nomastafab$mmg_date1) == F) 
+
+#denominator 
+nrow(nomastafab)
+```
+
+## Regression analysis for AFAB Patients
+```{r}
+#Predictors of mammography assigned female at birth
+#We will create a function that performs univariate analysis
+
+univariable <- function(x, y) {
+  tidy(glm(
+    reformulate(x, "mammography"),
+    data = y, 
+    family = "binomial"
+  ), conf.int = T) %>%
+    mutate(predictor = x) %>%
+    modify_at(c("estimate", "conf.high", "conf.low"), function(estimate)
+      round(estimate, digits = 3))  
+  } 
+
+inputs <- c("employment", 
+            "insurance", 
+            "education", 
+            "hormones",
+            "ethnicity2")
+
+univariate <- map_dfr(inputs, univariable, y = afab)
+
+kable(univariate)
+
+#Get the odds ratios (cross reference with what you're about to do)
+test <- glm(data = afab, mammography ~ employment, family = "binomial")
+
+exp(coef(test))
+
+#Getting the odds ratios for everything
+kable(cbind(name = univariate$term, 
+            OR = exp(univariate$estimate), 
+            CILOW = exp(univariate$conf.low), 
+            CIHIGH = exp(univariate$conf.high)))
+
+#Multivariate regression
+
+multivariate <- glm(mammography ~ #If patient had a mammogram (Yes vs No)
+                      employment + #Employment status
+                      insurance + #Insurance status
+                      education + #Education
+                      hormones + #Length of gender affirming hormone therapy
+                      ethnicity2, #Ethnicity
+                    data = afab, family = "binomial")
+
+summary(multivariate)
+
+#Getting odds ratios
+exp(cbind(OR = coef(multivariate), confint(multivariate)))
+
+#We would like remove anyone who had a mastectomy from that group and re-calculate
+
+nomastafab <- afab %>% filter(mastectomy == "Unchecked")
+
+inputs1 <- c("employment", 
+            "insurance", 
+            "hormones")
+
+univariate1 <- map_dfr(inputs1, univariable, y = nomastafab)
+
+kable(univariate1)
+
+multivariate1 <- glm(mammography ~ 
+                      employment + 
+                      insurance + 
+                      #education + #everybody went to college in this group 
+                      hormones, 
+                    data = nomastafab, family = "binomial")
+
+summary(multivariate1)
+
+```
+
+## Additional mammogram information
+
+```{r}
+# We want to know the number of mammograms/number of years eligible for mammograms per person
+# This is defined as person years
+
+#Create a variable of ANY lifetime mammogram
+
+
+afab$anymam <- ifelse(is.na(afab$mmg_date1) == T, FALSE, TRUE)
+
+afab <- afab %>% mutate(eligibilitydate = dob + days(365.25*40))
+
+afab <- afab %>% mutate(yearseligible = difftime(mastectomy_date, eligibilitydate, units = "days"))
+
+afab$today <- as.POSIXct(as.Date("2021-04-25"), format = "%Y-%m-%d")
+
+afab$yearseligible <- ifelse(is.na(afab$yearseligible) == T,
+                             difftime(afab$today, afab$eligibilitydate, units == "days"),
+                             afab$yearseligible)
+
+afab$yearseligible <- afab$yearseligible/365.25
+
+afab[afab$yearseligible < 0, "yearseligible"] <- NA
+
+#This gives us binary 0 vs 1 if mammogram occurred, but we want counts
+afab$anymamnumeric <- as.numeric(afab$anymam)
+
+afab$anymamnumeric/afab$yearseligible
+
+#Total number of lifetime mammograms
+afab$mmg_date1num <- ifelse(is.na(afab$mmg_date1), 0, 1)
+afab$mmg_date2num <- ifelse(is.na(afab$mmg_date2), 0, 1)
+afab$mmg_date3num <- ifelse(is.na(afab$mmg_date3), 0, 1)
+afab$mmg_date4num <- ifelse(is.na(afab$mmg_date4), 0, 1)
+afab$mmg_date5num <- ifelse(is.na(afab$mmg_date5), 0, 1)
+afab$mmg_date6num <- ifelse(is.na(afab$mmg_date6), 0, 1)
+afab$mmg_date7num <- ifelse(is.na(afab$mmg_date7), 0, 1)
+afab$mmg_date8num <- ifelse(is.na(afab$mmg_date8), 0, 1)
+afab$mmg_date9num <- ifelse(is.na(afab$mmg_date9), 0, 1)
+afab$mmg_date10num <- ifelse(is.na(afab$mmg_date10), 0, 1)
+afab$mmg_date11num <- ifelse(is.na(afab$mmg_date11), 0, 1)
+afab$mmg_date12num <- ifelse(is.na(afab$mmg_date12), 0, 1)
+afab$mmg_date13num <- ifelse(is.na(afab$mmg_date13), 0, 1)
+
+afab$lifetimemam <- rowSums(afab[,c("mmg_date1num",
+                                "mmg_date2num",
+                                "mmg_date3num",
+                                "mmg_date4num",
+                                "mmg_date5num",
+                                "mmg_date6num", 
+                                "mmg_date7num",
+                                "mmg_date8num",
+                                "mmg_date9num",
+                                "mmg_date10num",
+                                "mmg_date11num",
+                                "mmg_date12num", 
+                                "mmg_date13num"
+                                )])
+
+
+mamratesafab <- afab$lifetimemam/afab$yearseligible
+
+#Let's do the same thing for AMAB
+
+#Create a variable of ANY lifetime mammogram
+
+amab$anymam <- ifelse(is.na(amab$mmg_date1) == T, FALSE, TRUE)
+
+amab <- amab %>% mutate(eligibilitydate = dob + days(18263))
+
+amab$today <- as.POSIXct(as.Date("2021-04-25"), format = "%Y-%m-%d")
+
+amab <- amab %>% mutate(yearseligible = difftime(today, eligibilitydate, units = "days"))
+
+amab$yearseligible <- amab$yearseligible/365.25
+
+amab[amab$yearseligible < 0, "yearseligible"] <- NA
+
+amabggplot <- amab %>% filter(is.na(yearseligible) == F) %>% filter(estrogen_duration > 60 | prog_duration > 60 | spiro_duration > 60)
+
+#This gives us binary 0 vs 1 if mammogram occurred, but we want counts
+amabggplot$anymamnumeric <- as.numeric(amabggplot$anymam)
+
+amabggplot$yearseligible <- as.numeric(amabggplot$yearseligible)
+
+amabggplot$anymamnumeric/amabggplot$yearseligible
+
+#Total number of lifetime mammograms
+amabggplot$mmg_date1num <- ifelse(is.na(amabggplot$mmg_date1), 0, 1)
+amabggplot$mmg_date2num <- ifelse(is.na(amabggplot$mmg_date2), 0, 1)
+amabggplot$mmg_date3num <- ifelse(is.na(amabggplot$mmg_date3), 0, 1)
+amabggplot$mmg_date4num <- ifelse(is.na(amabggplot$mmg_date4), 0, 1)
+amabggplot$mmg_date5num <- ifelse(is.na(amabggplot$mmg_date5), 0, 1)
+amabggplot$mmg_date6num <- ifelse(is.na(amabggplot$mmg_date6), 0, 1)
+amabggplot$mmg_date7num <- ifelse(is.na(amabggplot$mmg_date7), 0, 1)
+amabggplot$mmg_date8num <- ifelse(is.na(amabggplot$mmg_date8), 0, 1)
+amabggplot$mmg_date9num <- ifelse(is.na(amabggplot$mmg_date9), 0, 1)
+amabggplot$mmg_date10num <- ifelse(is.na(amabggplot$mmg_date10), 0, 1)
+amabggplot$mmg_date11num <- ifelse(is.na(amabggplot$mmg_date11), 0, 1)
+amabggplot$mmg_date12num <- ifelse(is.na(amabggplot$mmg_date12), 0, 1)
+amabggplot$mmg_date13num <- ifelse(is.na(amabggplot$mmg_date13), 0, 1)
+
+amabggplot$lifetimemam <- rowSums(amabggplot[,c("mmg_date1num",
+                                "mmg_date2num",
+                                "mmg_date3num",
+                                "mmg_date4num",
+                                "mmg_date5num",
+                                "mmg_date6num",
+                                "mmg_date7num",
+                                "mmg_date8num",
+                                "mmg_date9num",
+                                "mmg_date10num",
+                                "mmg_date11num",
+                                "mmg_date12num",
+                                "mmg_date13num"
+                                )])
+
+mamratesamab <- amabggplot$lifetimemam/amabggplot$yearseligible
+
+
+#Create a dataframe that we will feed into ggplot
+#AFAB has 51 rows, AMAB has 42 rows, final dataframe should have 93 rows
+
+afabggplot <- afab %>% filter(is.na(yearseligible) == F)
+afabggplot$type <- "DFAB"
+amabggplot$type <- "DMAB"
+
+afabggplot <- afabggplot %>% select(type, yearseligible, lifetimemam)
+amabggplot1 <- amabggplot %>% select(type, yearseligible, lifetimemam)
+
+allptsggplot <- rbind(amabggplot1, afabggplot)
+allptsggplot$patient <- allptsggplot$type
+
+ggplot() + 
+  geom_point(data = allptsggplot, aes(x = lifetimemam, y = yearseligible, color = patient)) + 
+  ggtitle("Lifetime Mammograms versus Eligible Screening Years per Patient") + 
+  xlab("Number of Lifetime Mammograms") + 
+  ylab("Eligible Screening Years") + 
+  geom_abline(slope = 2, intercept = 0, color = "black") + 
+  scale_color_discrete(name = "Designated Sex at Birth")
+
+
+ggplot(data = allptsggplot, aes(x=yearseligible, y=lifetimemam, group = patient)) +
+  geom_point(aes(shape = patient, size = 5)) +
+  ggtitle("Lifetime Mammograms versus Eligible Screening Years per Patient") +
+  ylab("Number of Lifetime Mammograms") +
+  xlab("Eligible Screening Years") +
+  geom_abline(slope = 0.5, intercept = 0, color = "black") +
+  scale_shape_manual(values = c(1, 18), name="Group", labels=c("TGNB DFAB", "TGNB DMAB")) +
+  scale_size_identity(name="Group", labels=c("TGNB DFAB", "TGNB DMAB")) +
+  # scale_color_discrete(name = "Group", labels = c("TGNB DFAB", "TGNB DMAB")) + 
+  theme_bw() + 
+  scale_x_continuous(breaks = seq(0, 40, by = 5)) +
+  scale_y_continuous(breaks = seq(0, 15, by = 1)) + 
+  theme(text = element_text(size=20)) + 
+  guides(shape = guide_legend(override.aes = list(size = 5))) + 
+  theme(legend.position = c(0.9, 0.9))
+
+ggplot() +
+  geom_point(data = amabggplot, aes(x = yearseligible, y = lifetimemam, color = "red")) +
+  ggtitle("TGNB DMAB: Lifetime Mammograms versus Eligible Screening Years per Patient") +
+  ylab("Number of Lifetime Mammograms") +
+  xlab("Eligible Screening Years") +
+  geom_abline(slope = 0.5, intercept = 0, color = "black") +
+  scale_color_discrete(guide = FALSE)
+
+ggplot() +
+  geom_point(data = afabggplot, aes(x = yearseligible, y = lifetimemam, color = "red")) +
+  ggtitle("TGNB DFAB: Lifetime Mammograms versus Eligible Screening Years per Patient") +
+  ylab("Number of Lifetime Mammograms") +
+  xlab("Eligible Screening Years") +
+  geom_abline(slope = 0.5, intercept = 0, color = "black") +
+  scale_color_discrete(guide = FALSE)
+
+#Eligibility period: should start with the date they presented to clinic
+#If people had too few mammograms, want to know if we're missing mammograms, or is the denominator for patient time too big
+#Need to use the right amount of patient time, which should be the first time the patient was seen in the clinic and end with the last time the patient was seen in the clinic
+
+#Calculating Person Time
+#AFAB
+# Total Number of Years
+personyearsafab <- sum(afab$yearseligible, na.rm = T)
+lifetimemamafab <- sum(afab$lifetimemam, na.rm = T)
+
+#Total Person Years
+lifetimemamafab/personyearsafab
+#The answer is 0.134 mammograms per person-year 
+
+#Calculating Person Time
+#AMAB
+# Total Number of Years
+personyearsamab <- sum(amabggplot$yearseligible, na.rm = T)
+lifetimemamamab <- sum(amabggplot$lifetimemam, na.rm = T)
+
+#Total Person Years
+lifetimemamamab/personyearsamab
+#The answer is 0.170 mammograms per person-year
+```
+
+## Mammogram findings, high risk lesions, mastectomy pathology, etc.
+
+```{r}
+
+#Let's look at the mastectomy group
+mastectomy <- data %>% filter(mastectomy == "Checked")
+
+
+mastectomydemo <- print(CreateTableOne(vars = row_variables1, 
+                                        data = mastectomy, 
+                                        includeNA = T), 
+                         showAllLevels = TRUE,                        
+                         nonnormal = row_variables1,
+                         exact = row_variables1,
+                         width = 1000)
+
+
+findings <- data
+#Don't care about location
+findings <- findings[, -grep("location", colnames(findings))]
+
+findings <- findings %>% filter(is.na(mmg_date1) == F)
+
+tokeep <- c("record_id",
+            "mrn",
+            "dob",
+            "sab",
+            "gi",
+            "mastectomy_pathology",
+            "more_imaging1",
+            "more_imaging2",
+            "more_imaging3",
+            "more_imaging4",
+            "more_imaging7",
+            "more_imaging9",
+            "biopsy_finding1",
+            "biopsy_finding2"
+            )
+findings <- select(findings, tokeep)
+
+findingsafab <- findings %>% filter(sab == "Female")
+
+findingsamab <- findings %>% filter(sab == "Male")
+```
+
+## Breast Cancer information
+
+```{r}
+breastcxpts <- data %>% filter(breastcx_date != "")
+```
+
+#Kaplan Meier Curve for Time to Mastectomy
+
+```{r}
+library(survival)
+library(survminer)
+
+afab$mastectomyevent <- revalue(afab$mastectomy, c("Checked" = "Yes", "Unchecked" = "No"))
+afab <- transform(afab, observed = pmin(mastectomy_date, today))
+afab$observed <- afab$observed %>% replace_na("2021-04-24 19:00:00 CDT")
+afab$observed <- as.POSIXct(afab$observed, format = "%Y-%m-%d")
+afab <- afab %>% mutate(eventtime = difftime(mastectomy_date, dob, units = "days"))
+afab <- afab %>% mutate(censortime = difftime(today, dob, units = "days"))
+#afab$mastectomyevent is the event indicator 
+afab <- afab %>% mutate(survtime = difftime(observed, dob, units = "days"))
+afab$status <- revalue(afab$mastectomyevent, c("Yes" = 0, "No" = 1))
+afab$status <- as.numeric(afab$status)
+
+#Event time: mastectomy_date/eventtime
+#Censoring time: today/censortime
+#Event indicator: mastectomyevent (Yes if Ti < Ci, No if Ti > Ci)
+#Observed time: Y = min(mastectomy_date, today) aka survtime
+
+#Convert to months: 
+afab$survtime <- afab$survtime*0.0328767
+
+test <- survfit(Surv(survtime, status) ~ 1, data = afab)
+plot(test, xlab = "Months", ylab = "Time to Event")
+test[1:10]
+
+KMplot <- ggsurvplot(fit = survfit(Surv(survtime, status) ~ 1, data = afab),
+           xlab = "Months", 
+           ylab = "Time to Mastectomy",
+           title = "Time to Mastectomy Among Patients Designated Female at Birth",
+           legend = "none")
+
+KMplot$plot + 
+  geom_vline(xintercept = 480, linetype = "dashed") + 
+  geom_vline(xintercept = 600, linetype = "dashed") + 
+  geom_text(mapping = aes(x = 475, y = 0.01), label = "Age 40 years", colour = "black", hjust = -1, vjust = -1, angle = 90) + 
+  geom_text(mapping = aes(x = 595, y = 0.01), label = "Age 50 years", colour = "black", hjust = -1, vjust = -1, angle = 90)
+
+```
+
+```{r}
+#Looking at screening modalities other than mammography
+
+datasubset <- data
+table(datasubset$not_a_mammo)
+table(datasubset$not_a_mammo_type)
+table(datasubset$not_a_mam_date)
+table(datasubset$not_a_mammo_findings)
+
+```
+
+```{r}
+#Trends in screening over the years
+#Use the lubridate pacakge to extract the year
+
+#AFAB
+grep("mmg", colnames(afab))
+colswewant <- as.vector(grep("mmg", colnames(afab)))
+afab$mmg_date1year <- year(afab$mmg_date1)
+afab$mmg_date2year <- year(afab$mmg_date2)
+afab$mmg_date3year <- year(afab$mmg_date3)
+afab$mmg_date4year <- year(afab$mmg_date4)
+afab$mmg_date5year <- year(afab$mmg_date5)
+afab$mmg_date6year <- year(afab$mmg_date6)
+afab$mmg_date7year <- year(afab$mmg_date7)
+afab$mmg_date8year <- year(afab$mmg_date8)
+afab$mmg_date9year <- year(afab$mmg_date9)
+afab$mmg_date10year <- year(afab$mmg_date10)
+afab$mmg_date11year <- year(afab$mmg_date11)
+afab$mmg_date12year <- year(afab$mmg_date12)
+afab$mmg_date13year <- year(afab$mmg_date13)
+
+#We have to create a table that has two columns: year and count
+table1 <- as.data.frame(table(afab$mmg_date1year))
+table2 <- as.data.frame(table(afab$mmg_date2year))
+table3 <- as.data.frame(table(afab$mmg_date3year))
+table4 <- as.data.frame(table(afab$mmg_date4year))
+table5 <- as.data.frame(table(afab$mmg_date5year))
+table6 <- as.data.frame(table(afab$mmg_date6year))
+table7 <- as.data.frame(table(afab$mmg_date7year))
+table8 <- as.data.frame(table(afab$mmg_date8year))
+table9 <- as.data.frame(table(afab$mmg_date9year))
+table10 <- as.data.frame(table(afab$mmg_date10year))
+table11 <- as.data.frame(table(afab$mmg_date11year))
+table12 <- as.data.frame(table(afab$mmg_date12year))
+table13 <- as.data.frame(table(afab$mmg_date13year))
+
+#This is a super shitty way of doing things
+merge(x = table1, y = table2, by = "Var1", all = TRUE)
+afabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(table1, table2, table3))
+names(afabyears) <- c("Var1", "One", "Two", "Three")
+afabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(afabyears, table4, table5, table6))
+names(afabyears) <- c("Var1", "One", "Two", "Three", "Four", "Five", "Six")
+afabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(afabyears, table7))
+names(afabyears) <- c("Year", "One", "Two", "Three", "Four", "Five", "Six", "Seven")
+
+years <- c("1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021")
+
+afabyears$Year <- factor(afabyears$Year, levels = years)
+
+#Add row for 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006 
+newrow <- as.vector(c(2006, 0, 0, 0, 0, 0, 0, 0))
+newrow1 <- as.vector(c(1998, 0, 0, 0, 0, 0, 0, 0))
+newrow2 <- as.vector(c(1999, 0, 0, 0, 0, 0, 0, 0))
+newrow3 <- as.vector(c(2000, 0, 0, 0, 0, 0, 0, 0))
+newrow4 <- as.vector(c(2001, 0, 0, 0, 0, 0, 0, 0))
+newrow5 <- as.vector(c(2002, 0, 0, 0, 0, 0, 0, 0))
+newrow6 <- as.vector(c(2003, 0, 0, 0, 0, 0, 0, 0))
+newrow7 <- as.vector(c(2004, 0, 0, 0, 0, 0, 0, 0))
+
+allnewrows <- rbind(newrow, newrow1, newrow2, newrow3, newrow4, newrow5, newrow6, newrow7)
+allnewrows <- as.data.frame(allnewrows)
+rownames(allnewrows) <- NULL
+colnames(allnewrows) <- c("Year", "One", "Two", "Three", "Four", "Five", "Six", "Seven")
+
+afabyears <- rbind(afabyears, allnewrows)
+
+afabyears$DFAB <- rowSums(afabyears[,2:8], na.rm = T)
+afabyears <- afabyears %>% select(Year, DFAB)
+
+ggplot() + 
+  geom_point(data = afabyears, aes(Year, DFAB), size = 3) + 
+  ggtitle("Number of Mammograms Performed Over Time for TGNB DFAB") +
+  ylab("Number Mammograms") +
+  xlab("Screening Year") +
+  theme_bw() + 
+  scale_y_continuous(breaks = seq(0, 10, by = 1)) + 
+  theme(text = element_text(size=20)) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+#AMAB
+grep("mmg", colnames(amabggplot))
+colswewant1 <- as.vector(grep("mmg", colnames(amabggplot)))
+amabggplot$mmg_date1year <- year(amabggplot$mmg_date1)
+amabggplot$mmg_date2year <- year(amabggplot$mmg_date2)
+amabggplot$mmg_date3year <- year(amabggplot$mmg_date3)
+amabggplot$mmg_date4year <- year(amabggplot$mmg_date4)
+amabggplot$mmg_date5year <- year(amabggplot$mmg_date5)
+amabggplot$mmg_date6year <- year(amabggplot$mmg_date6)
+amabggplot$mmg_date7year <- year(amabggplot$mmg_date7)
+amabggplot$mmg_date8year <- year(amabggplot$mmg_date8)
+amabggplot$mmg_date9year <- year(amabggplot$mmg_date9)
+amabggplot$mmg_date10year <- year(amabggplot$mmg_date10)
+amabggplot$mmg_date11year <- year(amabggplot$mmg_date11)
+amabggplot$mmg_date12year <- year(amabggplot$mmg_date12)
+amabggplot$mmg_date13year <- year(amabggplot$mmg_date13)
+
+#We have to create a table that has two columns: year and count
+table1 <- as.data.frame(table(amabggplot$mmg_date1year))
+table2 <- as.data.frame(table(amabggplot$mmg_date2year))
+table3 <- as.data.frame(table(amabggplot$mmg_date3year))
+table4 <- as.data.frame(table(amabggplot$mmg_date4year))
+table5 <- as.data.frame(table(amabggplot$mmg_date5year))
+table6 <- as.data.frame(table(amabggplot$mmg_date6year))
+table7 <- as.data.frame(table(amabggplot$mmg_date7year))
+table8 <- as.data.frame(table(amabggplot$mmg_date8year))
+table9 <- as.data.frame(table(amabggplot$mmg_date9year))
+table10 <- as.data.frame(table(amabggplot$mmg_date10year))
+table11 <- as.data.frame(table(amabggplot$mmg_date11year))
+table12 <- as.data.frame(table(amabggplot$mmg_date12year))
+table13 <- as.data.frame(table(amabggplot$mmg_date13year))
+
+#I will admit this is not the best way to do this, but for the sake of a deadline had to brute force it
+merge(x = table1, y = table2, by = "Var1", all = TRUE)
+amabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(table1, table2, table3))
+names(amabyears) <- c("Var1", "One", "Two", "Three")
+amabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(amabyears, table4, table5, table6))
+names(amabyears) <- c("Var1", "One", "Two", "Three", "Four", "Five", "Six")
+amabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(amabyears, table7, table8, table9))
+names(amabyears) <- c("Var1", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine")
+amabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(amabyears, table10, table11, table12))
+names(amabyears) <- c("Var1", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve")
+amabyears <- Reduce(function(x, y) merge(x, y, by = "Var1", all=TRUE), list(amabyears, table13))
+names(amabyears) <- c("Year", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen")
+
+years <- c("1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021")
+
+amabyears$Year <- factor(amabyears$Year, levels = years)
+
+
+#Add row for year 2000, 2002, 2005
+newrow <- as.vector(c(2000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+newrow1 <- as.vector(c(2002, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+newrow2 <- as.vector(c(2005, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+
+allnewrows <- rbind(newrow, newrow1)
+allnewrows <- rbind(allnewrows, newrow2)
+
+allnewrows <- as.data.frame(allnewrows)
+rownames(allnewrows) <- NULL
+colnames(allnewrows) <- c("Year", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen")
+  
+amabyears <- rbind(amabyears, allnewrows)
+
+amabyears$DMAB <- rowSums(amabyears[,2:14], na.rm = T)
+
+amabyears <- amabyears %>% select(Year, DMAB)
+
+
+ggplot() + 
+  geom_point(data = amabyears, aes(Year, DMAB), size = 3) + 
+  ggtitle("Number of Mammograms Performed Over Time for TGNB DMAB") +
+  ylab("Number Mammograms") +
+  xlab("Screening Year") +
+  theme_bw() + 
+  scale_y_continuous(breaks = seq(0, 12, by = 1)) + 
+  theme(text = element_text(size=20)) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+#Let's put everyone together
+allptsyears <- join(amabyears, afabyears, by = "Year")
+library(reshape2)
+allptsyears <- melt(allptsyears)
+names(allptsyears)[2] <- "Group"
+
+#remotes::install_github("coolbutuseless/ggpattern")
+library(ggpattern)
+library(ggplot2)
+
+ggplot(allptsyears, aes(Year, value)) + 
+  geom_bar_pattern(stat = "identity", 
+                   pattern = c(rep("stripe", 24),
+                               rep("none", 24)
+                               ),
+                   pattern_density = .1,
+                   pattern_spacing = 0.01,
+                   pattern_fill = 'black',
+                   aes(fill = Group), 
+                   position = "dodge", 
+                   color = "black") +
+  scale_fill_manual(" ", 
+                    labels = c("DMAB", "DFAB"),
+                    values = c("DMAB" = "white", "DFAB" = "gray")) +
+  guides(fill = guide_legend(override.aes = 
+                               list(
+                                 pattern = c("stripe", "none"),
+                                 pattern_spacing = .01,
+                                 pattern_angle = c(45, 0)
+                                 )
+                             )) + 
+  theme_bw() + 
+  ggtitle("Number of Mammograms Performed Over Time") +
+  ylab("Number of Mammograms") +
+  xlab("Screening Year") +
+  scale_y_continuous(breaks = seq(0, 12, by = 1)) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  geom_text(mapping = aes(x = 24, y = 3.25), label = "*", size = 10) + 
+  theme(text = element_text(size=20))
+
+
+ggplot(data = allptsyears, aes(x = Year, y = value, fill = Group)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  ggtitle("Number of Mammograms Performed Over Time") +
+  ylab("Number of Mammograms") +
+  xlab("Screening Year") +
+  theme_bw() + 
+  scale_y_continuous(breaks = seq(0, 12, by = 1)) + 
+  theme(text = element_text(size=20)) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  geom_text(mapping = aes(x = 24, y = 3.25), label = "*", size = 10)
+
+```
+
